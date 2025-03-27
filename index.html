@@ -1,0 +1,376 @@
+
+<!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Traffic Simulation</title>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                <style>
+                  body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                  }
+                  .header-container {
+                    display: flex;
+                    justify-content: space-between; /* Header left, button right */
+                    align-items: center;
+                    padding: 10px 20px;
+                }
+
+                .header {
+                    font-size: 26px;
+                    font-weight: bold;
+                    margin-top: -20px;
+                }
+                  .container {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                    gap: 20px;
+                    margin-top: 0px;
+                  }
+                  .lane-box {
+                    width: 45%;
+                    padding: 10px;
+                    border: 1px solid #ccc;
+                    border-radius: 10px;
+                    background: #f9f9f9;
+                    text-align: left;
+                  }
+                  .chart-container {
+                    width: 100%;
+                    height: 200px;
+                  }
+                  canvas {
+                    max-height: 100%;
+                  }
+                  select {
+                    width: 100%;
+                    padding: 5px;
+                    margin-top: 5px;
+                  }
+                  .probability {
+                    font-weight: bold;
+                    margin-top: 5px;
+                  }
+                  #startSimulation {
+                    margin: 20px;
+                    padding: 10px 20px;
+                    font-size:23px;
+                    background-color: #3B82F6;
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                    border-radius: 5px;
+                  }
+                  #startSimulation:hover {
+                    background-color: #2563EB;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="header-container">
+                    <h2 class="header">Traffic Management System</h2>
+                    <button id="startSimulation">Start Simulation</button>
+                  </div>
+                <div class="container">
+                  <!-- Lane 1 -->
+                  <div class="lane-box" id="lane1">
+                    <label>Lane 1 (Right) - Vehicle Probability</label>
+                    <select onchange="updateProbability('lane1')">
+                      <option value="0.08">Free Flow</option>
+                      <option value="0.13">Medium</option>
+                      <option value="0.3">Congestion</option>
+                    </select>
+                    <div class="probability">Probability: 0.08</div>
+                    <div class="chart-container"><canvas id="chartLane1"></canvas></div>
+                  </div>
+            
+                  <!-- Lane 2 -->
+                  <div class="lane-box" id="lane2">
+                    <label>Lane 2 (Down) - Vehicle Probability</label>
+                    <select onchange="updateProbability('lane2')">
+                      <option value="0.08">Free Flow</option>
+                      <option value="0.13">Medium</option>
+                      <option value="0.3">Congestion</option>
+                    </select>
+                    <div class="probability">Probability: 0.08</div>
+                    <div class="chart-container"><canvas id="chartLane2"></canvas></div>
+                  </div>
+            
+                  <!-- Lane 3 -->
+                  <div class="lane-box" id="lane3">
+                    <label>Lane 3 (Left) - Vehicle Probability</label>
+                    <select onchange="updateProbability('lane3')">
+                      <option value="0.08">Free Flow</option>
+                      <option value="0.13">Medium</option>
+                      <option value="0.3">Congestion</option>
+                    </select>
+                    <div class="probability">Probability: 0.08</div>
+                    <div class="chart-container"><canvas id="chartLane3"></canvas></div>
+                  </div>
+            
+                  <!-- Lane 4 -->
+                  <div class="lane-box" id="lane4">
+                    <label>Lane 4 (Up) - Vehicle Probability</label>
+                    <select onchange="updateProbability('lane4')">
+                      <option value="0.08">Free Flow</option>
+                      <option value="0.13">Medium</option>
+                      <option value="0.3">Congestion</option>
+                    </select>
+                    <div class="probability">Probability: 0.08</div>
+                    <div class="chart-container"><canvas id="chartLane4"></canvas></div>
+                  </div>
+                </div>
+            
+                <script>
+                  let simulationActive = false; // Track if the simulation is active
+            
+                  // Update the displayed probability when a dropdown is changed
+                  function updateProbability(laneId) {
+                    const select = document.querySelector(`#${laneId} select`);
+                    const probabilityDiv = document.querySelector(`#${laneId} .probability`);
+                    probabilityDiv.textContent = `Probability: ${select.value}`;
+                  }
+            
+                  // Initialize Chart.js charts for each lane
+                  const laneCharts = {
+                    "Lane 1": new Chart(document.getElementById("chartLane1"), {
+                      type: "line",
+                      data: {
+                        labels: [],
+                        datasets: [
+                          {
+                            label: "Vehicles Crossed",
+                            data: [],
+                            borderColor: "#3B82F6",
+                            backgroundColor: "rgba(59, 130, 246, 0.2)",
+                            fill: true,
+                          },
+                        ],
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          x: {
+                            title: {
+                              display: true,
+                              text: "Time",
+                            },
+                          },
+                          y: {
+                            beginAtZero: true,
+                            suggestedMax: 10,
+                          },
+                        },
+                      },
+                    }),
+                    "Lane 2": new Chart(document.getElementById("chartLane2"), {
+                      type: "line",
+                      data: {
+                        labels: [],
+                        datasets: [
+                          {
+                            label: "Vehicles Crossed",
+                            data: [],
+                            borderColor: "#10B981",
+                            backgroundColor: "rgba(16, 185, 129, 0.2)",
+                            fill: true,
+                          },
+                        ],
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          x: {
+                            title: {
+                              display: true,
+                              text: "Time",
+                            },
+                          },
+                          y: {
+                            beginAtZero: true,
+                            suggestedMax: 10,
+                          },
+                        },
+                      },
+                    }),
+                    "Lane 3": new Chart(document.getElementById("chartLane3"), {
+                      type: "line",
+                      data: {
+                        labels: [],
+                        datasets: [
+                          {
+                            label: "Vehicles Crossed",
+                            data: [],
+                            borderColor: "#F59E0B",
+                            backgroundColor: "rgba(245, 158, 11, 0.2)",
+                            fill: true,
+                          },
+                        ],
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          x: {
+                            title: {
+                              display: true,
+                              text: "Time",
+                            },
+                          },
+                          y: {
+                            beginAtZero: true,
+                            suggestedMax: 10,
+                          },
+                        },
+                      },
+                    }),
+                    "Lane 4": new Chart(document.getElementById("chartLane4"), {
+                      type: "line",
+                      data: {
+                        labels: [],
+                        datasets: [
+                          {
+                            label: "Vehicles Crossed",
+                            data: [],
+                            borderColor: "#EF4444",
+                            backgroundColor: "rgba(239, 68, 68, 0.2)",
+                            fill: true,
+                          },
+                        ],
+                      },
+                      options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          x: {
+                            title: {
+                              display: true,
+                              text: "Time",
+                            },
+                          },
+                          y: {
+                            beginAtZero: true,
+                            suggestedMax: 10,
+                          },
+                        },
+                      },
+                    }),
+                  };
+            
+                  // Start simulation and save probabilities
+                  document.getElementById("startSimulation").addEventListener("click", function () {
+                    simulationActive = true; // Set simulation as active
+                    const config = {
+                      "Lane 1": document.querySelector("#lane1 select").value,
+                      "Lane 2": document.querySelector("#lane2 select").value,
+                      "Lane 3": document.querySelector("#lane3 select").value,
+                      "Lane 4": document.querySelector("#lane4 select").value,
+                    };
+            
+                    fetch("/start-simulation", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(config),
+                    })
+                      .then((response) => {
+                        if (response.ok) {
+                          Swal.fire({
+                            icon: "success",
+                            title: "Simulation Started!",
+                            text: "The simulation has started successfully. Check the Python window.",
+                            confirmButtonText: "OK",
+                            confirmButtonColor: "#3B82F6",
+                          });
+                        } else {
+                          Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: "Failed to start the simulation. Please try again.",
+                            confirmButtonText: "OK",
+                            confirmButtonColor: "#EF4444",
+                          });
+                        }
+                      })
+                      .catch((error) => {
+                        console.error("Error:", error);
+                        Swal.fire({
+                          icon: "error",
+                          title: "Error",
+                          text: "An error occurred while starting the simulation.",
+                          confirmButtonText: "OK",
+                          confirmButtonColor: "#EF4444",
+                        });
+                      });
+                  });
+            
+                  // Update charts dynamically when simulation is active
+                  setInterval(() => {
+                    if (!simulationActive) return; // Only update if simulation is active
+            
+                    fetch("/get-traffic-data")
+                      .then((response) => response.json())
+                      .then((trafficData) => {
+                        console.log("Fetched Traffic Data:", trafficData);
+                         // Group data by lane and get the latest entry for each lane
+                        const latestData = {};
+                        trafficData.forEach((entry) => {
+                            const lane = entry.lane;
+                           
+                            // Append the current date to the time field to create a valid Date object
+                            const currentDate = new Date().toISOString().split("T")[0]; // Get current date in YYYY-MM-DD format
+                            const timestamp = new Date(`${currentDate}T${entry.time}`).getTime(); // Combine date and time
+
+                            // If the lane is not in latestData or the current entry is newer, update it
+                            if (!latestData[lane] || timestamp > latestData[lane].timestamp) {
+                            latestData[lane] = {
+                                vehicles_crossed: entry.vehicles_crossed,
+                                timestamp: timestamp,
+                            };
+                            }
+                        });
+                        console.log("Processed Latest Data:", latestData);
+                        // Prepare data for updating charts
+                        const chartData = {
+                            "Lane 1": latestData["right"]?.vehicles_crossed || 0,
+                            "Lane 2": latestData["down"]?.vehicles_crossed || 0,
+                            "Lane 3": latestData["left"]?.vehicles_crossed || 0,
+                            "Lane 4": latestData["up"]?.vehicles_crossed || 0,
+                        };
+                        console.log("Chart Data to Update:", chartData);
+                        updateCharts(chartData);
+                        })
+                        .catch((error) => console.error("Error fetching traffic data:", error));
+                    }, 10000);             // Update charts dynamically when simulation is active
+            
+                  // Function to update the charts
+                  function updateCharts(data) {
+                    Object.keys(data).forEach((lane) => {
+                      const chart = laneCharts[lane];
+                      const currentTime = new Date().toLocaleTimeString();
+                      console.log(`Updating ${lane} Chart:`, {
+                                time: currentTime,
+                                value: data[lane],
+                                }); // Log the chart being updated
+                      chart.data.labels.push(currentTime);
+                      chart.data.datasets[0].data.push(data[lane]);
+            
+                      if (chart.data.labels.length > 10) {
+                        chart.data.labels.shift();
+                        chart.data.datasets[0].data.shift();
+                      }
+            
+                      chart.update();
+                    });
+                  }
+                </script>
+              </body>
+            </html>
+            
